@@ -1,10 +1,19 @@
 #!/usr/bin/python
 #coding=utf-8
+#Copyright (c) 2013, Yu Renbi
+#All rights reserved.
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from bs4 import BeautifulSoup
 import mechanize
 import urllib
+import urllib2
 import urlparse
 import svcode
+import time
+import functools
 
 UA_GGBOT = r"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
 UA_IE9 = r"Mozilla/5.0 (Windows; U; MSIE 9.0; Windows NT 9.0; zh-CN)"
@@ -12,6 +21,23 @@ HEADERS = [('User-agent', UA_IE9)]
 HEADER_XMLHTTPREQUEST = HEADERS[:]
 HEADER_XMLHTTPREQUEST.append( ('X-Requested-With', 'XMLHttpRequest') )
 
+def loop_for_urlerror(times=3):
+    def dec(func):
+        @functools.wraps(func)
+        def rfunc(*args, **kargs):
+            looptimes = 0
+            while 1:
+                try:
+                    return func(*args, **kargs)
+                except urllib2.URLError:
+                    if looptimes < 3:
+                        looptimes += 1
+                        time.sleep(1)
+                        continue
+                    else:
+                        raise
+        return rfunc
+    return dec
 
 def query2dict(query):
     rdict = {}
@@ -38,6 +64,7 @@ class Page(object):
         self.url = self.url + "?" + urllib.urlencode(pin_gdata) if pin_gdata else self.url
         self._pin_gdata = pin_gdata
 
+    @loop_for_urlerror(3)
     def refresh(self, gdata = None, data = None):
         """Refresh the url. g(et)data and data are dict."""
         if self.ajax:
@@ -76,7 +103,9 @@ class LoginPage(Page):
         self.judgelogin = judgelogin
         self.judgevcode = judgevcode
 
+    @loop_for_urlerror(3)
     def login(self, formdata, vcodename, gdata = None, data = None):
+        @loop_for_urlerror(3)
         def get_vcode():
             r = self.browser.open(self.urlvcode)
             isuffix = r.info().dict.get("content-type", "image/jpg")
@@ -116,29 +145,41 @@ class Site(object):
         self.baseurl = baseurl
         self.pages = {}
         browser = mechanize.Browser()
-        browser.set_debug_http(True)
-        browser.set_debug_responses(True)
+        #browser.set_debug_http(True)
+        #browser.set_debug_responses(True)
         browser.set_handle_referer(True)
         browser.set_handle_robots(False)
         browser.set_handle_redirect(True)
         browser.addheaders = HEADERS
         self.browser = browser
 
-    def addpage(self, name, *larg, **args):
-        args["url"] = urlparse.urljoin(self.baseurl, args["url"])
-        page = Page(*larg, **args)
+    def addpage(self, name, *args, **kargs):
+        args = list(args)
+        if "url" not in kargs:
+            args[0] = urlparse.urljoin(self.baseurl, args[0])
+        else:
+            kargs["url"] = urlparse.urljoin(self.baseurl, kargs["url"])
+        page = Page(*args, **kargs)
         page.browser = self.browser
         self.pages[name] = page
 
     def addloginpage(self, name, *args, **kargs):
-        kargs["url"] = urlparse.urljoin(self.baseurl, kargs["url"])
-        kargs["urlvcode"] = urlparse.urljoin(self.baseurl, kargs["urlvcode"])
+        args = list(args)
+        if "url" not in kargs:
+            args[0] = urlparse.urljoin(self.baseurl, args[0])
+        else:
+            kargs["url"] = urlparse.urljoin(self.baseurl, kargs["url"])
+        if "urlvcode" not in kargs:
+            args[1] = urlparse.urljoin(self.baseurl, args[1])
+        else:
+            kargs["urlvcode"] = urlparse.urljoin(self.baseurl, kargs["urlvcode"])
+
         page = LoginPage(*args, **kargs)
         page.browser = self.browser
         self.pages[name] = page
 
-    def refresh(self, name, **args):
-        return self.pages[name].refresh(**args)
+    def refresh(self, _name, *args, **kargs):
+        return self.pages[_name].refresh(*args, **kargs)
 
     def get_form(self, name_, *args, **kargs):
         return self.pages[name_].get_form(*args, **kargs)
@@ -163,7 +204,7 @@ class Site(object):
     #def submit(data, gdata)
 
 def main():
-    """just some simple tests"""
+    """just some simple uncomplete tests"""
 
     try:
         import sensitive
@@ -183,12 +224,10 @@ def main():
 
     print "================================================================\n\n\n"
     cjsite = Site("http://cj.shu.edu.cn")
-    cjsite.addloginpage("login", url= "/", urlvcode="/User/GetValidateCode?%20%20+%20GetTimestamp()", 
+    cjsite.addloginpage("login",  "/", "/User/GetValidateCode?%20%20+%20GetTimestamp()", 
                             judgevcode=lambda rawpage: "验证码不正确" not in rawpage, nr=0)
     cjsite.addpage("grade", url="/StudentPortal/CtrlScoreQuery", ajax=True)
-    cjsite.addpage("sindex", url="/Home/StudentIndex")
     print cjsite.pages["login"].login(dict(txtUserNo=USERNAME, txtPassword=PASSWORD), "txtValidateCode")
-    #cjsite.pages["sindex"].refresh()
     cjsite.pages["grade"].refresh(data=dict(academicTermID="9"))
     print cjsite.last_raw("grade")
 

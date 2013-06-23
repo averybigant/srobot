@@ -9,6 +9,6 @@ def show_vcode(raw_image, isuffix=".jpg"):
     tempf.write(raw_image)
     tempf.flush()
     os.system("gnome-open %s" % tempf.name)
-    time.sleep(1)
+    time.sleep(1) #critical
     tempf.close()
 
