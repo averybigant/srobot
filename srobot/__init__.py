@@ -207,9 +207,9 @@ def main():
     """just some simple uncomplete tests"""
 
     try:
-        import sensitive
-        USERNAME = sensitive.username
-        PASSWORD = sensitive.password
+        import mysensitive
+        USERNAME = mysensitive.username
+        PASSWORD = mysensitive.password
     except ImportError:
         USERNAME = raw_input("username: ")
         PASSWORD = raw_input("password: ")
