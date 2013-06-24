@@ -6,9 +6,9 @@ Simplified BSD License
 ## INSTALLATION ##
 If you have setuptools or pypi installed,<br />
 
-> easy\_install dist/srobot-0.1.0a-py2.7.egg<br />
+> sudo easy\_install dist/srobot-0.1.0a-py2.7.egg<br />
 or<br />
-> pip install dist/srobot-0.1.0a.tar.gz<br /><br />
+> sudo pip install dist/srobot-0.1.0a.tar.gz<br /><br />
 
 Otherwise you can simply copy dist/srobot-0.1.0a.tar.gz and srobot.egg-info/ to the
 standard location for third-party Python modules (eg.
