@@ -1,7 +1,7 @@
 ## LICENSE ##
 Simplified BSD License
-AUTHOR: yurenbi
-LATEST VERSION: 0.1.0a
+<br />AUTHOR: yurenbi
+<br />LATEST VERSION: 0.1.0a
 
 ## INSTALLATION ##
 If you have setuptools or pypi installed,<br />
