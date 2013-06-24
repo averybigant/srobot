@@ -91,6 +91,16 @@ class Page(object):
             self.browser.select_form(name=formsoup.attrs["name"])
         return self.browser.form
 
+    def __repr__(self):
+        return "< %s.Page at %s %s >" % (__name__, id(self), self.url)
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __unicode__(self):
+        return unicode(self.__repr__())
+
+
 class LoginPage(Page):
     def __init__(self, url, urlvcode, judgelogin = lambda raw_page: "用户名" not in raw_page, judgevcode = lambda raw_page: "验证码错误" not in raw_page,
                                     pin_gdata = None, pin_gdata_vcode = None, ajax = False, *args, **kargs):
@@ -139,6 +149,15 @@ class LoginPage(Page):
             return True
         else:
             return False
+
+    def __repr__(self):
+        return "< %s.LoginPage at %s %s %s >" % (__name__, id(self), self.url, self.urlvcode)
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __unicode__(self):
+        return unicode(self.__repr__())
 
 class Site(object):
     def __init__(self, baseurl):
@@ -190,6 +209,24 @@ class Site(object):
     def last_soup(self, name):
         return self.pages[name].soup.prettify()
 
+    def __repr__(self):
+        return "< %s.Site at %s %s >" % (__name__, id(self), self.baseurl)
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __unicode__(self):
+        return unicode(self.__repr__())
+
+    def __getitem__(self, key):
+        return self.pages[key]
+
+    def __setitem__(self, key, value):
+        self.pages[key] = value
+
+    def __delitem__(self, key):
+        del self.pages[key]
+
 
 #TODO: write a better wrapper for forms
 #class Form(Page):
@@ -230,6 +267,10 @@ def main():
     print cjsite.pages["login"].login(dict(txtUserNo=USERNAME, txtPassword=PASSWORD), "txtValidateCode")
     cjsite.pages["grade"].refresh(data=dict(academicTermID="9"))
     print cjsite.last_raw("grade")
+    print 
+    print cjsite
+    print cjsite["login"]
+    print cjsite["grade"]
 
 if __name__ == '__main__':
     main()
