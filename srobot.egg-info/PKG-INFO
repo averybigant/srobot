@@ -1,0 +1,12 @@
+Metadata-Version: 1.1
+Name: srobot
+Version: 0.1.0a
+Summary: A simple wrapper for mechanize for writting web bots or crawlers.
+Home-page: https://github.com/averybigant/srobot
+Author: Yu Renbi
+Author-email: averybigant@gmail.com
+License: Simplified BSD License
+Description: UNKNOWN
+Platform: UNKNOWN
+Requires: mechanize(==0.2.6)
+Requires: beautifulsoup4(==4.0.5)

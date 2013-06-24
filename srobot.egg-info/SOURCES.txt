@@ -1,0 +1,7 @@
+setup.py
+srobot/__init__.py
+srobot/svcode.py
+srobot.egg-info/PKG-INFO
+srobot.egg-info/SOURCES.txt
+srobot.egg-info/dependency_links.txt
+srobot.egg-info/top_level.txt
